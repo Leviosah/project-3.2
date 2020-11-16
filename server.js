@@ -2,6 +2,10 @@ const express = require("express");
 const path = require("path");
 const PORT = process.env.PORT || 3001;
 const app = express();
+const socketio = require('scoket.io')
+const http = require('http')
+const server = http.createServer(app)
+const io = socketio(server)
 
 // Define middleware here
 app.use(express.urlencoded({ extended: true }));
@@ -13,7 +17,7 @@ if (process.env.NODE_ENV === "production") {
 
 require('./routes/apiRoutes')(app);
 require('./routes/htmlRoutes')(app);
-
+require('./routes/socketRoutes')(app);
 // Define API routes here
 
 // Send every other request to the React app
@@ -22,3 +26,15 @@ require('./routes/htmlRoutes')(app);
 app.listen(PORT, () => {
   console.log(`🌎 ==> API server now on port ${PORT}!`);
 });
+
+io.on('connection', (socket) => {
+  console.log('New User Has Connected')
+  socket.emit('Your id', socket.id) // grabs id and emits is back to user. Id can then be stored in state
+  socket.on('send message', body => {
+    io.emit('message', body)
+  })    //obect that contains message text and id of sender
+
+  socket.on('disconnect', () => {
+    console.log('User has disconnected')
+  })
+})
